@@ -1,0 +1,23 @@
+{
+  "name": "reddit-gallery-scheduler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tigeryu8900/reddit-gallery-scheduler.git"
+  },
+  "scripts": {
+    "start": "npm run start:bg",
+    "start:fg": "node app.js",
+    "start:bg": "nohup sh -c 'npm run start:fg' &"
+  },
+  "keywords": [],
+  "author": "tigeryu8900",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.1",
+    "puppeteer": "^21.9.0"
+  }
+}
