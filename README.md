@@ -48,4 +48,4 @@ Create a JSON file at `schedule/pending/YYYY-mm-dd HH-MM-SS/data.json` in this f
 
 Put all the image files in `schedule/pending/YYYY-mm-dd HH-MM-SS/`, and in this case, it would be `1.png` and `2.png`.
 
-Done events are put in `done/`.
+Done events are put in `schedule/done/`.
