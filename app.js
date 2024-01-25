@@ -4,6 +4,8 @@ import "dotenv/config";
 import fs from "fs/promises";
 import * as path from "path";
 
+const scheduled = new Set();
+
 async function post(dir) {
     const data = JSON.parse((await fs.readFile(path.join("schedule", "pending", dir, "data.json"))).toString());
     try {
@@ -27,7 +29,8 @@ async function post(dir) {
         let time = Date.now();
         while (divs.length < data.images.length) {
             if (Date.now() - time > 10000) {
-                throw "Not enough images";
+                console.error("Not enough images", dir, data);
+                return;
             }
             divs = await page.$$('div[draggable="true"]:has([style*="background-image"])');
         }
@@ -78,12 +81,27 @@ async function post(dir) {
     }
 }
 
+function schedule(dir) {
+    try {
+        let time = Date.parse(dir.replace(/^(\d+)-(\d+)-(\d+) (\d+)-(\d+)-(\d+)$/,
+            "$1-$2-$3T$4:$5:$6"));
+        if (!scheduled.has(time)) {
+            scheduled.add(time);
+            setTimeout(post, time - Date.now(), dir);
+            console.log("Scheduled", dir);
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 (async () => {
     await fs.mkdir(path.join("schedule", "pending"), {recursive: true}).catch(() => {});
     await fs.mkdir(path.join("schedule", "done"), {recursive: true}).catch(() => {});
     for (let dir of await fs.readdir(path.join("schedule", "pending"))) {
-        let time = Date.parse(dir.replace(/^(\d+)-(\d+)-(\d+) (\d+)-(\d+)-(\d+)$/,
-            "$1-$2-$3T$4:$5:$6"));
-        setTimeout(post, time - Date.now(), dir);
+        schedule(dir);
+    }
+    for await (let event of fs.watch(path.join("schedule", "pending"))) {
+        schedule(event.filename);
     }
 })();
