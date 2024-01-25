@@ -11,7 +11,7 @@
   "scripts": {
     "start": "npm run start:bg",
     "start:fg": "node app.js",
-    "start:bg": "nohup sh -c 'npm run start:fg' &"
+    "start:bg": "nohup npm run start:fg &"
   },
   "keywords": [],
   "author": "tigeryu8900",
