@@ -7,22 +7,28 @@ import * as path from "path";
 const scheduled = new Set();
 
 async function post(dir) {
+    console.log("Posting", dir);
     const data = JSON.parse((await fs.readFile(path.join("schedule", "pending", dir, "data.json"))).toString());
+    console.log("Starting Puppeteer");
+    const browser = await puppeteer.launch({headless: "new"});
     try {
-        const browser = await puppeteer.launch({headless: "new"});
         const page = await browser.newPage();
+        await page.setUserAgent((await browser.userAgent()).replace(/headless/gi, ""));
+        console.log("Signing in");
         await page.goto("https://www.reddit.com/login/");
         await page.type('#loginUsername', process.env.USERNAME);
         await page.type('#loginPassword', process.env.PASSWORD);
         await page.click('.AnimatedForm [type="submit"]');
         await page.waitForNetworkIdle();
+        console.log("Creating post");
         await page.goto(`https://www.reddit.com/${data.subreddit}/submit`);
         await page.waitForSelector('::-p-xpath(//*[text()="Images" or text()="Images & Video"])');
         await page.click('::-p-xpath(//*[text()="Images" or text()="Images & Video"])');
         await page.type('[placeholder="Title"]', data.title);
+        console.log("Adding images");
         for (let image of data.images) {
             let elementHandle = await page.$('input[type="file"]');
-            await elementHandle.uploadFile(path.join("schedule", dir, image.file));
+            await elementHandle.uploadFile(path.join("schedule", "pending", dir, image.file));
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
         let divs = [];
@@ -46,6 +52,7 @@ async function post(dir) {
                 await page.type('[placeholder="Add a link..."]', data.images[i].link);
             }
         }
+        console.log("Setting tags and flair");
         if (data.oc) {
             await page.click('::-p-xpath(//*[text()="OC"])');
         }
@@ -63,6 +70,7 @@ async function post(dir) {
         await page.click('::-p-xpath(//*[not(.//i) and text()="Post"])');
         await page.waitForNavigation();
         if (data.comments) {
+            console.log("Adding comments");
             let markdown = await page.$('::-p-xpath(//*[text()="Markdown Mode"])');
             if (markdown) {
                 await markdown.click();
@@ -75,9 +83,11 @@ async function post(dir) {
             }
         }
         await fs.rename(path.join("schedule", "pending", dir), path.join("schedule", "done", dir));
-        console.log("Posted", dir, data);
+        console.log("Posted", dir, page.url(), data);
     } catch (e) {
         console.error("Error", dir, data, e);
+    } finally {
+        await browser.close();
     }
 }
 
@@ -96,6 +106,7 @@ function schedule(dir) {
 }
 
 (async () => {
+    console.log(new Date());
     await fs.mkdir(path.join("schedule", "pending"), {recursive: true}).catch(() => {});
     await fs.mkdir(path.join("schedule", "done"), {recursive: true}).catch(() => {});
     for (let dir of await fs.readdir(path.join("schedule", "pending"))) {
