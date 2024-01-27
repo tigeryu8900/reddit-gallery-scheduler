@@ -2,6 +2,9 @@
 
 A Reddit scheduler for gallery posts
 
+**Please use [reddit-scheduler](https://github.com/tigeryu8900/reddit-scheduler) instead since it supports mre post
+types.**
+
 ## Set up
 
 Create a `.env` file in the project root directory in this format where `username` and `password` are the Reddit
