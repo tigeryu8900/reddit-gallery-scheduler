@@ -2,7 +2,7 @@
 
 A Reddit scheduler for gallery posts
 
-**Please use [reddit-scheduler](https://github.com/tigeryu8900/reddit-scheduler) instead since it supports mre post
+**Please use [reddit-scheduler](https://github.com/tigeryu8900/reddit-scheduler) instead since it supports more post
 types.**
 
 ## Set up
