@@ -26,19 +26,23 @@ async function post(dir) {
         await page.click('::-p-xpath(//*[text()="Images" or text()="Images & Video"])');
         await page.type('[placeholder="Title"]', data.title);
         console.log("Adding images");
-        for (let image of data.images) {
-            let elementHandle = await page.$('input[type="file"]');
-            await elementHandle.uploadFile(path.join("schedule", "pending", dir, image.file));
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-        let divs = [];
-        let time = Date.now();
-        while (divs.length < data.images.length) {
-            if (Date.now() - time > 10000) {
-                console.error("Not enough images", dir, data);
-                return;
+        for (let i = 0; i < data.images.length; i++) {
+            const image = images[i];
+            const elementHandle = await page.$('input[type="file"]');
+            loop: for (let j = 0; j < 10 && divs.length <= i; j++) {
+                await elementHandle.uploadFile(path.join("schedule", "pending", dir, image.file));
+                let time = Date.now();
+                while (divs.length <= i) {
+                    if (Date.now() - time > 10000) {
+                        continue loop;
+                    }
+                    divs = await page.$$('div[draggable="true"]:has([style*="background-image"])');
+                }
             }
-            divs = await page.$$('div[draggable="true"]:has([style*="background-image"])');
+        }
+        if (divs.length < data.images.length) {
+            console.error("Not enough images", dir, data);
+            return;
         }
         await divs[0].click();
         await new Promise(resolve => setTimeout(resolve, 1000));
